@@ -29,7 +29,7 @@ UDP::UDP(const std::string &hostname, int port) :
         }
     }
 
-void UDP::send(std::string&& message)
+void UDP::send(std::string&& message,CURL *handle)
 {
   try {
     mSocket.send_to(boost::asio::buffer(message, message.size()), mEndpoint);

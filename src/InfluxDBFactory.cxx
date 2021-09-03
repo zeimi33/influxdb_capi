@@ -72,7 +72,9 @@ std::unique_ptr<Transport> InfluxDBFactory::GetTransport(std::string url) {
 
 std::unique_ptr<InfluxDB> InfluxDBFactory::Get(std::string url)
 {
-  return std::make_unique<InfluxDB>(InfluxDBFactory::GetTransport(url));
+  auto db =  std::make_unique<InfluxDB>(InfluxDBFactory::GetTransport(url));
+  db->url = url;
+  return db;
 }
 
 } // namespace influxdb

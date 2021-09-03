@@ -28,7 +28,7 @@ class HTTP : public Transport
     void create(std::string&& post) override;
     /// Sends point via HTTP POST
     ///  \throw InfluxDBException	when CURL fails on POSTing or response code != 200
-    void send(std::string&& post) override;
+    void send(std::string&& post,CURL *handle) override;
 
     /// Queries database
     /// \throw InfluxDBException	when CURL GET fails
@@ -45,7 +45,7 @@ class HTTP : public Transport
     /// Initilizes CURL for writting and common options
     /// \throw InfluxDBException	if database (?db=) not specified
     void initCurl(const std::string& url);
-    void initHandle(CURL** handle,const char* param,const std::string url);
+    void initHandle(CURL** handle,std::string param,const std::string url);
     /// Initializes CURL for reading
     void initCurlRead(const std::string& url);
 

@@ -28,7 +28,7 @@ class UnixSocket : public Transport
     void create(std::string&& message) { return; };
 
     /// \param message   r-value string formated
-    void send(std::string&& message) override;
+    void send(std::string&& post,CURL *handle) override;
 
   private:
     /// Boost Asio I/O functionality

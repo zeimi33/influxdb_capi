@@ -7,6 +7,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <curl/curl.h>
 
 namespace influxdb
 {
@@ -21,7 +22,7 @@ class Transport
 
     virtual void create(std::string&& message) = 0;
     /// Sends string blob
-    virtual void send(std::string&& message) = 0;
+    virtual void send(std::string&& post,CURL *handle) = 0;
 
     /// Sends s request
     virtual std::string query(const std::string& /*query*/) {

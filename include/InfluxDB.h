@@ -10,12 +10,15 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <curl/curl.h>
 
 #include "Transport.h"
 #include "Point.h"
 
 namespace influxdb
 {
+
+
 
 class InfluxDB
 {
@@ -34,8 +37,7 @@ class InfluxDB
 
     /// Writes a metric
     /// \param metric
-    void write(Point&& metric);
-
+    void write(Point&& metric,CURL *handle);
     /// Queries InfluxDB database
     void create(std::string buf);
     std::vector<Point> query(const std::string& query);
@@ -52,7 +54,7 @@ class InfluxDB
     /// \param name
     /// \param value
     void addGlobalTag(std::string_view name, std::string_view value);
-
+    std::string url;
   private:
     /// Buffer for points
     std::deque<std::string> mBuffer;
@@ -67,12 +69,25 @@ class InfluxDB
     std::unique_ptr<Transport> mTransport;
 
     /// Transmits string over transport
-    void transmit(std::string&& point);
+    void transmit(std::string&& point,CURL* handle);
 
     /// List of global tags
     std::string mGlobalTags;
 };
 
-} // namespace influxdb
+class writeApi{
+public:
+    std::string bucket;
+    std::string org;
+    InfluxDB *influxdb;
+    CURL* writeHandle;
+    writeApi(std::unique_ptr<InfluxDB> influxDb,std::string bucket,std::string org);
+    void initHandle(std::string param,const std::string url);
+    void write(Point&& metric);
+};
+
+
+};
+ // namespace influxdb
 
 #endif // INFLUXDATA_INFLUXDB_H

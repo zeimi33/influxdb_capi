@@ -19,36 +19,36 @@ HTTP::HTTP(const std::string& url)
 
 void HTTP::initCurl(const std::string& url)
 {
-  CURLcode globalInitResult = curl_global_init(CURL_GLOBAL_ALL);
-  if (globalInitResult != CURLE_OK) {
-    throw InfluxDBException("HTTP::initCurl", curl_easy_strerror(globalInitResult));
-  }
-  this->initHandle(writeHandle,"write",url);
-  this->initHandle(createBucketHandle,"buckets",url);
+    CURLcode globalInitResult = curl_global_init(CURL_GLOBAL_ALL);
+    if (globalInitResult != CURLE_OK) {
+        throw InfluxDBException("HTTP::initCurl", curl_easy_strerror(globalInitResult));
+    }
+
+    initHandle(&writeHandle,"create",url);
+    initHandle(&createBucketHandle,"buckets",url);
 }
 
-void HTTP::initHandle(CURL* handle,const char* param,const std::string& url){
-    std::string initUrl = url;
-    auto position = initUrl.find("?");
+void HTTP::initHandle(CURL** handle,std::string param,const std::string url){
+    std::string createBucketUrl = url;
+    auto position = createBucketUrl.find("?");
     if (position == std::string::npos) {
         throw InfluxDBException("HTTP::initCurl", "Database not specified");
     }
-    if (initUrl.at(position - 1) != '/') {
-        initUrl.insert(position, std::string (std::string("/")+std::string(param)).c_str());
+    if (createBucketUrl.at(position - 1) != '/') {
+        createBucketUrl.insert(position, (std::string("/")+param).c_str());
     } else {
-        initUrl.insert(position, std::string(param));
+        createBucketUrl.insert(position, param.c_str());
     }
-    handle = curl_easy_init();
-    curl_easy_setopt(handle, CURLOPT_URL,  initUrl.c_str());
-    curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 10);
-    curl_easy_setopt(handle, CURLOPT_TIMEOUT, 10);
-    curl_easy_setopt(handle, CURLOPT_POST, 1);
-    curl_easy_setopt(handle, CURLOPT_TCP_KEEPIDLE, 120L);
-    curl_easy_setopt(handle, CURLOPT_TCP_KEEPINTVL, 60L);
+    *handle = curl_easy_init();
+    curl_easy_setopt(*handle, CURLOPT_URL,  createBucketUrl.c_str());
+    curl_easy_setopt(*handle, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_easy_setopt(*handle, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_easy_setopt(*handle, CURLOPT_TIMEOUT, 10);
+    curl_easy_setopt(*handle, CURLOPT_POST, 1);
+    curl_easy_setopt(*handle, CURLOPT_TCP_KEEPIDLE, 120L);
+    curl_easy_setopt(*handle, CURLOPT_TCP_KEEPINTVL, 60L);
     FILE *devnull = fopen("/dev/null", "w+");
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, devnull);
-    handle = curl_easy_init();
+    curl_easy_setopt(*handle, CURLOPT_WRITEDATA, devnull);
 }
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
@@ -141,22 +141,13 @@ void HTTP::create(std::string&& post)
 }
 
 
-void HTTP::send(std::string&& post)
+void HTTP::send(std::string&& post,CURL *handle)
 {
   CURLcode response;
   long responseCode;
-  struct curl_slist* headers = NULL;
-  char * auth = "Authorization: Token n4LKrFSiL3cOnsFn8WuAFe16XekVT2l2_zJq2r19kLlbPswJYmGA6Py3tm19uo51kYT9ENLrp46pWqhPVtOYng==";
-  char * json = "Content-type: application/json";
-  char * encode = "Accept-Encoding: gzip";
-  headers = curl_slist_append(headers,json);
-  headers = curl_slist_append(headers,auth);
-  headers = curl_slist_append(headers,encode);
-  curl_easy_setopt(writeHandle,CURLOPT_POST,1);
-  curl_easy_setopt(writeHandle, CURLOPT_HTTPHEADER,headers);
-  curl_easy_setopt(writeHandle, CURLOPT_POSTFIELDS, post.c_str());
-  curl_easy_setopt(writeHandle, CURLOPT_POSTFIELDSIZE, (long) post.length());
-  response = curl_easy_perform(writeHandle);
+  curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post.c_str());
+  curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, (long) post.length());
+  response = curl_easy_perform(handle);
   curl_easy_getinfo(writeHandle, CURLINFO_RESPONSE_CODE, &responseCode);
   if (response != CURLE_OK) {
     throw InfluxDBException("HTTP::send", curl_easy_strerror(response));
