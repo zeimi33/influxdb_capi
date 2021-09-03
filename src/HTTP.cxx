@@ -145,17 +145,15 @@ void HTTP::send(std::string&& post,CURL *handle)
 {
   CURLcode response;
   long responseCode;
-  std::string response_str;
   curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post.c_str());
   curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, (long) post.length());
-  curl_easy_setopt(handle,CURLOPT_WRITEDATA,&response_str);
   response = curl_easy_perform(handle);
-  curl_easy_getinfo(writeHandle, CURLINFO_RESPONSE_CODE, &responseCode);
+  curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &responseCode);
   if (response != CURLE_OK) {
     throw InfluxDBException("HTTP::send", curl_easy_strerror(response));
   }
   if (responseCode < 200 || responseCode > 206) {
-    throw InfluxDBException("HTTP::send", "Response code: " + std::to_string(responseCode) +response_str);
+    throw InfluxDBException("HTTP::send", "Response code: " + std::to_string(responseCode));
   }
 }
 

@@ -122,8 +122,12 @@ void writeApi::initHandle(std::string param,const std::string url){
     char * auth = "Authorization: Token n4LKrFSiL3cOnsFn8WuAFe16XekVT2l2_zJq2r19kLlbPswJYmGA6Py3tm19uo51kYT9ENLrp46pWqhPVtOYng==";
     char * encode = "Accept-Encoding: gzip";
     char * json = "Content-type: ";
+    char * accept = "Accept: ";
+    char * agent = "User-Agent: influxdb-client-go/2.5.0  (linux; amd64)";
     headers = curl_slist_append(headers,json);
     headers = curl_slist_append(headers,auth);
+    headers = curl_slist_append(headers,accept);
+    headers = curl_slist_append(headers,agent);
     headers = curl_slist_append(headers,encode);
     curl_easy_setopt(writeHandle,CURLOPT_POST,1);
     curl_easy_setopt(writeHandle, CURLOPT_HTTPHEADER,headers);
