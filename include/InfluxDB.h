@@ -81,7 +81,7 @@ public:
     std::string org;
     InfluxDB *influxdb;
     CURL* writeHandle;
-    writeApi(std::unique_ptr<InfluxDB> influxDb,std::string bucket,std::string org);
+    writeApi(InfluxDB* influxDb,std::string bucket,std::string org);
     void initHandle(std::string param,const std::string url);
     void write(Point&& metric);
 };

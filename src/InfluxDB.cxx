@@ -90,11 +90,20 @@ void InfluxDB::write(Point&& metric,CURL* handle)
   }
 }
 
-writeApi::writeApi(std::unique_ptr<InfluxDB> influxDb,std::string bucket,std::string org){
+writeApi::writeApi(InfluxDB* influxDb,std::string bucket,std::string org){
     this->bucket = bucket;
-    this->influxdb = influxDb.get();
+    this->influxdb = influxDb;
     this->org = org;
-    initHandle("write",influxdb->url);
+    std::string url;
+    std::string params = std::string("bucket=") +bucket+std::string("&org=")+org;
+    auto position = influxdb->url.find("?");
+    if(position == std::string::npos){
+        url = influxdb->url + std::string("?") + params;
+    }else{
+        url = influxdb->url.insert(position+1,  params+std::string("&"));
+    }
+
+    initHandle("write",url);
 }
 
 void writeApi::initHandle(std::string param,const std::string url){
@@ -108,7 +117,16 @@ void writeApi::initHandle(std::string param,const std::string url){
     } else {
         createBucketUrl.insert(position, param.c_str());
     }
+    struct curl_slist* headers = NULL;
     writeHandle = curl_easy_init();
+    char * auth = "Authorization: Token n4LKrFSiL3cOnsFn8WuAFe16XekVT2l2_zJq2r19kLlbPswJYmGA6Py3tm19uo51kYT9ENLrp46pWqhPVtOYng==";
+    char * encode = "Accept-Encoding: gzip";
+    char * json = "Content-type: ";
+    headers = curl_slist_append(headers,json);
+    headers = curl_slist_append(headers,auth);
+    headers = curl_slist_append(headers,encode);
+    curl_easy_setopt(writeHandle,CURLOPT_POST,1);
+    curl_easy_setopt(writeHandle, CURLOPT_HTTPHEADER,headers);
     curl_easy_setopt(writeHandle, CURLOPT_URL,  createBucketUrl.c_str());
     curl_easy_setopt(writeHandle, CURLOPT_SSL_VERIFYPEER, 0);
     curl_easy_setopt(writeHandle, CURLOPT_CONNECTTIMEOUT, 10);
@@ -118,15 +136,6 @@ void writeApi::initHandle(std::string param,const std::string url){
     curl_easy_setopt(writeHandle, CURLOPT_TCP_KEEPINTVL, 60L);
     FILE *devnull = fopen("/dev/null", "w+");
     curl_easy_setopt(writeHandle, CURLOPT_WRITEDATA, devnull);
-    struct curl_slist* headers = NULL;
-    char * auth = "Authorization: Token n4LKrFSiL3cOnsFn8WuAFe16XekVT2l2_zJq2r19kLlbPswJYmGA6Py3tm19uo51kYT9ENLrp46pWqhPVtOYng==";
-    char * json = "Content-type: application/json";
-    char * encode = "Accept-Encoding: gzip";
-    headers = curl_slist_append(headers,json);
-    headers = curl_slist_append(headers,auth);
-    headers = curl_slist_append(headers,encode);
-    curl_easy_setopt(writeHandle,CURLOPT_POST,1);
-    curl_easy_setopt(writeHandle, CURLOPT_HTTPHEADER,headers);
 }
 
 void  writeApi::write(Point&& metric){
